@@ -36,8 +36,9 @@ class FhirReader:
         """Add bundle block to queue"""
         cmn = fhir_queue.FhirQueue()
         cmn.enqueue(item)
+        
 
-    def local_file_reader(self, folder_path: str):
+    def local_dir_reader(self, folder_path: str):
         """Method to read fhir bundle records from local disk and push to ingestion queue"""
         try:
             file_list = [join(folder_path, f) for f in listdir(folder_path) if isfile(join(folder_path, f))]
@@ -71,7 +72,7 @@ class FhirReader:
         else:
             logging.error("No response to process for %s", url_to_call)
 
-    def directry_url_reader(self, base_url: str):
+    def url_directory_reader(self, base_url: str):
         """Read github public url of directory, fetch file list (assuming all are in fhil format)
          and push a bundle record to ingestion queue"""
         base_url = base_url + '/' if base_url[-1] != '/' else ''
@@ -82,10 +83,12 @@ class FhirReader:
             except KeyError as ex:
                 logging.error("Error while getting file names: %s", str(ex))
             for fl in file_list:
-                file_url = base_url + "/" + fl
+                file_url = base_url  + fl["name"]
+                file_url = file_url.replace("/tree/", "/raw/")
+                print(file_url)
                 response_json = self._get_bundle_from_url(file_url)
                 if response_json:
                     fhil_block = construct_fhir_element('Bundle', response_json)
                     self._add_to_queue(fhil_block)
                 else:
-                    logging.error("No response to process for %s", fl)
+                    logging.error("No response to process for %s", fl["name"])

@@ -1,4 +1,5 @@
 """Main module - entry point"""
+import asyncio
 from argparse import ArgumentParser
 from ingest_fhir_records.fhir_reader import FhirReader
 from transform_fhir_records import process_fhir
@@ -25,21 +26,23 @@ def _parse_args():
     
     return args
 
-def main():
+async def main():
     """Get command line arguments and call ETL modules"""
     args =  _parse_args()
     reader = FhirReader()
     match args.mode:
         case 'local_disk':
-            reader.local_dir_reader(args.directory)
+            await reader.local_dir_reader(args.directory)
         case 'get_file_url':
-            reader.url_file_reader(args.url)
+            await reader.url_file_reader(args.url)
         case 'get_folder_url':
-            reader.url_directory_reader(args.url)
+            await reader.url_directory_reader(args.url)
 
 
 if __name__ == '__main__':
-    main()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(main())
 
 # Command line:
 # python main.py -m "local_disk" -d "C:\\Users\maukt\Documents\GitHub\exa-data-eng-assessment\data"

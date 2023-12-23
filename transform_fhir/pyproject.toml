@@ -6,8 +6,8 @@ authors = ["Mauktik <mauktikdesh@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
-fhir.resources = "^7.02"
+python = "^3.10"
+aiofiles = "^23.2"
 
 
 [build-system]

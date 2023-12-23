@@ -1,8 +1,8 @@
 """Common module has shared resources and functionalities """
-from collections import deque
+from asyncio import Queue
 import logging
 
-logging.basicConfig(filename='transform_fhir.log', encoding='utf-8', level=logging.WARNING)
+logging.basicConfig(filename='transform_fhir.log', encoding='utf-8', level=logging.INFO)
 
 class FhirQueue(object):
     """A singleton class used in multiple modules"""
@@ -11,19 +11,23 @@ class FhirQueue(object):
     def __new__(cls, *args, **kwargs):
         if not isinstance(cls._common_instance, cls):
             cls._common_instance = object.__new__(cls, *args, **kwargs)
-            cls._queue = deque(maxlen=10000)
+            cls._queue = Queue()
         return cls._common_instance
 
-    def enqueue(self, item):
+    def queue_size(self):
+        """Returns queue size"""
+        return self._queue.qsize()
+    
+    async def enqueue(self, item):
         """push item to queue. Risk of overflow"""
-        self._queue.append(item)
-        print(len(self._queue))
+        await self._queue.put(item)
+        print(self._queue.qsize())
 
-    def dequeue(self):
-        """return item from the end of the queue FIFO"""
+    async def dequeue(self):
+        """return item from the queue"""
         ret_val = None
         try:
-            ret_val = self._queue.pop()
-        except ValueError as ex:
+            ret_val = await self._queue.get()
+        except Exception as ex:
             logging.error("Error in dequeue: %s", str(ex))
         return ret_val

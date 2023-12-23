@@ -1,15 +1,23 @@
-"""tbd"""
-from  common import fhir_queue
+"""Module to read fhir bundle from the queue and transform it to dataframe"""
+from  common.fhir_queue import FhirQueue
+
 class ProcessFihr:
-      """tbd"""
+      """Classs reads data from the queue and based on resourceType <do something>"""
       def __init__(self) -> None:
-            pass
+            self.has_began = False
       
-      def process_bundle(self, fhil_block):
+      async def process_bundle(self):
         """tbd"""
-        que = fhir_queue.FhirQueue()
-        fhil_block = que.dequeue()
-        entry_dict = fhil_block.dict()["entry"]
-        for dic in entry_dict:
-            resrc = dic["resource"]
-            resourceType = resrc["resourceType"]
+        while True:
+            # Wait for first bundle to go in the queue
+            if self.has_began is True and FhirQueue().queue_size() == 0:
+                 break
+            fhil_block = await FhirQueue().dequeue()
+            self.has_began = True
+            entry_dict = fhil_block.dict()["entry"]
+            for dict_res in entry_dict:
+                  rsrc = dict_res["resource"]
+                  resource_type = rsrc["resourceType"]
+                  print(resource_type)
+            print(FhirQueue().queue_size())
+      

@@ -86,8 +86,6 @@ class FhirReader:
             if response_json:
                 logging.info("Processing 1 fhil bundles")
                 fhil_block = construct_fhir_element('Bundle', response_json)
-                logging.info(type(fhil_block))
-                logging.info(fhil_block)
                 await self._add_to_queue(fhil_block)
                 response_val = True
             else:

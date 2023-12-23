@@ -18,16 +18,17 @@ class FhirQueue(object):
         """Returns queue size"""
         return self._queue.qsize()
     
+    def empty(self):
+        """Bool value to tell if queue is empty or not"""
+        return self._queue.empty()
+    
     async def enqueue(self, item):
         """push item to queue. Risk of overflow"""
         await self._queue.put(item)
-        print(self._queue.qsize())
+        #print(self._queue.qsize())
 
     async def dequeue(self):
         """return item from the queue"""
-        ret_val = None
-        try:
-            ret_val = await self._queue.get()
-        except Exception as ex:
-            logging.error("Error in dequeue: %s", str(ex))
+        ret_val = await self._queue.get()
+        self._queue.task_done()
         return ret_val

@@ -2,7 +2,11 @@
 import asyncio
 from argparse import ArgumentParser
 from ingest_fhir_records.fhir_reader import FhirReader
-from transform_fhir_records import process_fhir
+from transform_fhir_records.process_fhir import ProcessFihr
+
+#Number to consumers to process fhil bundle from queue.
+# TODO: If time permits, make this value confiugrable
+CONSUMER_COUNT = 1
 
 def _parse_args():
     """Parse command line arguments and validate"""
@@ -30,13 +34,18 @@ async def main():
     """Get command line arguments and call ETL modules"""
     args =  _parse_args()
     reader = FhirReader()
+    transform = ProcessFihr()
+    tasks = []
     match args.mode:
         case 'local_disk':
-            await reader.local_dir_reader(args.directory)
+            tasks.append(asyncio.create_task(reader.local_dir_reader(args.directory)))
         case 'get_file_url':
-            await reader.url_file_reader(args.url)
+            tasks.append(asyncio.create_task(reader.url_file_reader(args.url)))
         case 'get_folder_url':
-            await reader.url_directory_reader(args.url)
+            tasks.append(asyncio.create_task(reader.url_directory_reader(args.url)))
+    tasks.append(asyncio.create_task(transform.process_bundle()))
+    await asyncio.gather(*tasks)
+
 
 
 if __name__ == '__main__':

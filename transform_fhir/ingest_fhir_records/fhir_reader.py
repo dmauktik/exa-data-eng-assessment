@@ -41,11 +41,12 @@ class FhirReader:
 
     async def local_dir_reader(self, folder_path: str):
         """Method to read fhir bundle records from local disk and push to ingestion queue"""
+        response_val = False
         try:
             file_list = [join(folder_path, f) for f in listdir(folder_path) if isfile(join(folder_path, f))]
         except FileNotFoundError as ex:
             logging.error(str(ex))
-            return
+            return False
         tasks = []
         for fp in file_list:
             tasks.append(asyncio.ensure_future(self._read_fhir_file(fp)))
@@ -55,9 +56,11 @@ class FhirReader:
             fhil_block = construct_fhir_element('Bundle', jblk)
             if fhil_block:
                 await self._add_to_queue(fhil_block)
+                response_val = True
             else:
                 logging.error("No response to process")
         logging.info("Queue size after ingestion is %d", FhirQueue().queue_size())
+        return response_val
 
     async def _get_bundle_from_url(self, url: str, client: aiohttp.ClientSession) -> dict:
         """internal method to call get() method and return json response"""
@@ -71,19 +74,26 @@ class FhirReader:
                     logging.error("Error calling url %s and error code is %d", url, response.status)
         except aiohttp.ClientConnectorError as ex:
             logging.error("Error calling url: %s", str(ex))
+        except Exception as ex:
+            logging.error("Error calling url: %s", str(ex))
         return response_json
 
     async def url_file_reader(self, url_to_call: str):
         """Method to GET fhir bundle record from the given url and push to ingestion queue"""
+        response_val = False
         async with aiohttp.ClientSession() as client:
             response_json = await self._get_bundle_from_url(url_to_call, client)
             if response_json:
                 logging.info("Processing 1 fhil bundles")
                 fhil_block = construct_fhir_element('Bundle', response_json)
+                logging.info(type(fhil_block))
+                logging.info(fhil_block)
                 await self._add_to_queue(fhil_block)
+                response_val = True
             else:
                 logging.error("No response to process for %s", url_to_call)
             logging.info("Queue size after ingestion is %d", FhirQueue().queue_size())
+            return response_val
 
     async def url_directory_reader(self, base_url: str):
         """Read github public url of directory, fetch file list (assuming all are in fhil format)

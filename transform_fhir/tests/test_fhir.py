@@ -1,22 +1,22 @@
 import os
 import asyncio
 import pytest
-from unittest.mock import patch
+import pandas as pd
+from unittest.mock import MagicMock
+from fhir.resources.R4B import construct_fhir_element
 from transform_fhir_records.process_fhir import ProcessFihr
 from ingest_fhir_records.fhir_reader import FhirReader
+from store_fhir_records.store_fhir import StoreFhir
 from common.fhir_queue import FhirQueue
-from fhir.resources.R4B import construct_fhir_element
+from common.storage_queue import StorageQueue
 
 @pytest.fixture
 def event_loop():
     loop = asyncio.get_event_loop()
-
     yield loop
-
     pending = asyncio.tasks.all_tasks(loop)
     loop.run_until_complete(asyncio.gather(*pending))
     loop.run_until_complete(asyncio.sleep(1))
-
     loop.close()
 
 @pytest.mark.asyncio
@@ -46,3 +46,53 @@ async def test_negative_process_bundle():
     await FhirQueue().enqueue(fhil_block)
     result = await ProcessFihr().process_bundle()
     assert result is -1
+
+@pytest.mark.asyncio
+async def test_process_bundle():
+    """Function to test ProcessFihr.process_bundle() method"""
+    fhir_bundle = {
+    "resourceType": "Bundle",
+    "id": "bundle-example",
+    "type": "searchset",
+    "total": 1,
+    "link": [
+        {
+            "relation": "self",
+            "url": "https://example.com/fhir/Bundle?_page=1"
+        }
+    ],
+    "entry": [
+        {
+            "fullUrl": "https://example.com/fhir/Patient/1",
+            "resource": {
+                "resourceType": "Patient",
+                "id": "1",
+                "name": [
+                    {
+                        "family": "Doe",
+                        "given": ["John"]
+                    }
+                ],
+                "gender": "male",
+                "birthDate": "1980-01-01"
+            },
+            "request": {
+                "method": "POST",
+                "url": "Patient"
+            }
+
+        }
+    ]
+}
+    fhil_block = construct_fhir_element('Bundle', fhir_bundle)
+    await FhirQueue().enqueue(fhil_block)
+    result = await ProcessFihr().process_bundle()
+    assert result is 0
+
+async def test_process_storage_queue_df():
+    """Function to test StoreFhir.process_storage_queue_df() method"""
+    await StorageQueue().enqueue("test message")
+    result = await StoreFhir().process_storage_queue_df()
+    assert result is True
+
+# command: pytest -q .\tests\test_fhir.py

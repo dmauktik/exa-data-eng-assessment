@@ -6,10 +6,8 @@ services:
     restart: always
     env_file:
       - .env
-    environment:
-      - POSTGRES_DB=fhirdata
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 volumes:

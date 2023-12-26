@@ -1,4 +1,6 @@
-"""Common module has shared resources and functionalities """
+"""StorageQueue holds async Queue object. Transfrm module puts the processed object in this queue
+and storage module consumes and pushes to database. Queue helps to decouple Transform and Load
+process to improves scalability, reliability and availability"""
 from asyncio import Queue
 import logging
 
@@ -23,9 +25,8 @@ class StorageQueue(object):
         return self._queue.empty()
     
     async def enqueue(self, item):
-        """push item to queue. Risk of overflow"""
+        """Push item to queue. Risk of overflow"""
         await self._queue.put(item)
-        #print(self._queue.qsize())
 
     async def dequeue(self):
         """return item from the queue"""

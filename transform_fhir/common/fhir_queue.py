@@ -1,4 +1,6 @@
-"""Common module has shared resources and functionalities """
+"""FhirQueue holds async Queue object. Inject module puts object in this queue and transform
+module consumes and processes the objects. Queue helps to decouple Extract and Transform
+process and improves scalability, reliability and availability"""
 from asyncio import Queue
 import logging
 
@@ -17,15 +19,14 @@ class FhirQueue(object):
     def queue_size(self):
         """Returns queue size"""
         return self._queue.qsize()
-    
+
     def empty(self):
         """Bool value to tell if queue is empty or not"""
         return self._queue.empty()
-    
+
     async def enqueue(self, item):
         """push item to queue. Risk of overflow"""
         await self._queue.put(item)
-        #print(self._queue.qsize())
 
     async def dequeue(self):
         """return item from the queue"""

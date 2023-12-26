@@ -4,8 +4,8 @@ import logging
 
 logging.basicConfig(filename='transform_fhir.log', encoding='utf-8', level=logging.INFO)
 
-class FhirQueue(object):
-    """A singleton class holding queue object and used in ingest and transform modules"""
+class StorageQueue(object):
+    """A singleton class holding queue and used in transform and storage modules"""
     _common_instance = None
     _queue = None
     def __new__(cls, *args, **kwargs):

@@ -110,8 +110,8 @@ class FhirReader:
                     file_url = file_url.replace("/tree/", "/raw/")
                     tasks.append(asyncio.ensure_future(self._get_bundle_from_url(file_url, client)))
                 
+                logging.info("Fetching files from remote.....")
                 response_jsons = await asyncio.gather(*tasks)
-                logging.info("Processing %d fhil bundles", len(response_jsons))
                 for rj in response_jsons:
                     if rj:
                         fhil_block = construct_fhir_element('Bundle', rj)

@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  postgresql:
+    image: postgres:16.1
+    container_name: transform_fhir_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=fhirdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
+    driver: local
+

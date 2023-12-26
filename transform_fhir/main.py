@@ -1,8 +1,10 @@
 """Main module - entry point"""
+import sys
 import asyncio
 from argparse import ArgumentParser
 from ingest_fhir_records.fhir_reader import FhirReader
 from transform_fhir_records.process_fhir import ProcessFihr
+from store_fhir_records.store_fhir import StoreFhir
 
 #Number to consumers to process fhil bundle from queue.
 # TODO: If time permits, make this value confiugrable
@@ -34,8 +36,8 @@ async def main():
     """Get command line arguments and call ETL modules"""
     args =  _parse_args()
     reader = FhirReader()
-    transform = ProcessFihr()
     tasks = []
+    #Possible to have multiple consumers to process files. But keeping it 1 for this PoC.
     match args.mode:
         case 'local_disk':
             tasks.append(asyncio.create_task(reader.local_dir_reader(args.directory)))
@@ -43,12 +45,15 @@ async def main():
             tasks.append(asyncio.create_task(reader.url_file_reader(args.url)))
         case 'get_folder_url':
             tasks.append(asyncio.create_task(reader.url_directory_reader(args.url)))
+    transform = ProcessFihr()
     tasks.append(asyncio.create_task(transform.process_bundle()))
+    storage = StoreFhir()
+    tasks.append(asyncio.create_task(storage.process_storage_df()))
     await asyncio.gather(*tasks)
 
-
-
 if __name__ == '__main__':
+    #if sys.platform == "win32":
+    #    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(main())

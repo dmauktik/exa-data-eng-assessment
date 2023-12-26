@@ -2,8 +2,10 @@ import os
 import asyncio
 import pytest
 from unittest.mock import patch
-
+from transform_fhir_records.process_fhir import ProcessFihr
 from ingest_fhir_records.fhir_reader import FhirReader
+from common.fhir_queue import FhirQueue
+from fhir.resources.R4B import construct_fhir_element
 
 @pytest.fixture
 def event_loop():
@@ -34,3 +36,13 @@ async def test_negative_url_directory_reader():
     """Function to test url_directory_reader() function"""
     result = await FhirReader().url_directory_reader("https://example.com")
     assert result is None
+
+@pytest.mark.asyncio
+async def test_negative_process_bundle():
+    """Function to test ProcessFihr.process_bundle() method. 
+    test_url_file_reader() also covers process_bundle()"""
+    encounter_data = {'resourceType': 'Bundle', 'type': 'transaction', 'entry': [{'fullUrl': 'test', 'resource': {}}]}
+    fhil_block = construct_fhir_element('Bundle', encounter_data)
+    await FhirQueue().enqueue(fhil_block)
+    result = await ProcessFihr().process_bundle()
+    assert result is -1

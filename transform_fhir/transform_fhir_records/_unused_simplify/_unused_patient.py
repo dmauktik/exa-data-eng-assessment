@@ -1,7 +1,8 @@
 """This module is unused. It is only to show the way to break and map Patient objects.
-Use this approach if the requirement is to have structured data in database i.e. no json
-objects in database.
-This approach can be applied to all the resource types and it is time comsuming."""
+This approach might be useful if the requirement is to have structured data in database i.e. 
+no json objects in database tables.
+This approach can be applied to all the resource types but is time comsuming and requre
+manual mapping."""
 import logging
 from fhir.resources.patient import Patient
 import pandas as pd
@@ -52,5 +53,3 @@ def patient(pobj: Patient):
     }
     df = pd.DataFrame(patient_info)
     return df
-
-

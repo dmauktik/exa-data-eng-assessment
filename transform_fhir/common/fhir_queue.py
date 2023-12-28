@@ -17,19 +17,25 @@ class FhirQueue(object):
         return cls._common_instance
 
     def queue_size(self):
-        """Returns queue size"""
+        """Returns queue size
+        Input: None
+        Returns: Number of items in the queue"""
         return self._queue.qsize()
 
     def empty(self):
-        """Bool value to tell if queue is empty or not"""
+        """Bool value to tell if queue is empty or not
+        Input: None
+        Returns: Boolean value to tell to the queue is empty or not"""
         return self._queue.empty()
 
     async def enqueue(self, item):
-        """push item to queue. Risk of overflow"""
+        """Push an item to queue.
+        Input: item: Python object representing fhir data"""
         await self._queue.put(item)
 
     async def dequeue(self):
-        """return item from the queue"""
+        """Pops an item from the queue and returns it
+        Input: None
+        Returns: Poped value from the queue"""
         ret_val = await self._queue.get()
-        self._queue.task_done()
         return ret_val

@@ -1,8 +1,7 @@
+"""Test module to unit test ingest, transform and storae functionalities"""
 import os
 import asyncio
 import pytest
-import pandas as pd
-from unittest.mock import MagicMock
 from fhir.resources.R4B import construct_fhir_element
 from transform_fhir_records.process_fhir import ProcessFihr
 from ingest_fhir_records.fhir_reader import FhirReader
@@ -12,6 +11,7 @@ from common.storage_queue import StorageQueue
 
 @pytest.fixture
 def event_loop():
+    """Async eventloop for pytest"""
     loop = asyncio.get_event_loop()
     yield loop
     pending = asyncio.tasks.all_tasks(loop)

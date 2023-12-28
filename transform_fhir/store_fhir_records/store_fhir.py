@@ -7,7 +7,9 @@ from urllib.parse import quote_plus
 from  sqlalchemy import create_engine, text, exc
 from  common.storage_queue import StorageQueue
 
-logging.basicConfig(filename='transform_fhir.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', 
+                    filename='transform_fhir.log', encoding='utf-8', level=logging.INFO,
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 class StoreFhir:
     """StoreFhir class constructs database connection string, reads storage queue and stores
@@ -31,47 +33,47 @@ class StoreFhir:
         """Fetch fhir bundle as dataframe from storage queue and insert into database
         Input: None
         Returns: Method execution status as boolean"""
-        return_val = False
+        return_val = True
         engine = create_engine(self.connection_str)
         logging.info("Starting to get items from storage queue")
+        set_pkey_once = False
         while True:
             transact_dict = await StorageQueue().dequeue()
-            #logging.critical(transact_dict)
             if transact_dict is None:
                 break
             print("Storage task picking next object...")
-            #logging.info(transact_dict["Patient"].to_html())
-            # Bulk push the records in database. dtype for columns set to defaults i.e.
+            # Push a bundle of records in database. dtype for columns set to defaults i.e.
             # string object due to time constraint.
             try:
                 for k,df in transact_dict.items():
                     if k not in self.tablecols:
                         self.tablecols[k] = list(df.columns)
-                        #logging.info(f"In if statement and dict is {self.tablecols[k]}")
                     else:
                         temp_colist = list(df.columns)
-                        #logging.info(f"New col list: {temp_colist}")
                         col_to_add = [item for item in temp_colist if item not in self.tablecols[k]]
                         with engine.connect() as con:
                             for col in col_to_add:
-                                #logging.info(col)
                                 self.tablecols[k].append(col)
                                 query = f"ALTER TABLE \"{k}\" ADD COLUMN \"{col}\" TEXT;"
                                 q_result = con.execute(text(query))
                                 con.commit()
-                                time.sleep(2)
-
-                                #logging.info(f"Ran query {query}")
+                                time.sleep(1)
                     df.to_sql(k, engine, index=False, if_exists='append')
-                    #logging.info(f"ran to_sql for {k}")
-                    #with engine.connect() as con:
-                        #query = f"ALTER TABLE \"{k}\" ADD PRIMARY KEY (id);"
-                        #q_result = con.execute(text(query))
-                        #logging.debug(q_result)
-                        #con.commit()
-                        #return_val = True
+                    if set_pkey_once is False:
+                        try:
+                            with engine.connect() as con:
+                                query = f"ALTER TABLE \"{k}\" ADD PRIMARY KEY (id);"
+                                q_result = con.execute(text(query))
+                                logging.debug(q_result)
+                                con.commit()
+                                return_val = True
+                        except exc.SQLAlchemyError as ex:
+                            # df.to_sql() is setting primary key for Few tables. So 
+                            # with this exception, it is ok to continue.
+                            logging.warning("Unable to set primary key constraint: %s", str(ex))
             except exc.SQLAlchemyError as ex:
                 logging.error("Error inserting records to database: %s", str(ex))
-                #return return_val
-        logging.info("All records stored to database.")
+                return_val = False
+            set_pkey_once = True
+        logging.info("All records stored in database.")
         return return_val

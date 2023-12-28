@@ -7,7 +7,9 @@ from ingest_fhir_records.fhir_reader import FhirReader
 from transform_fhir_records.process_fhir import ProcessFihr
 from store_fhir_records.store_fhir import StoreFhir
 
-logging.basicConfig(filename='transform_fhir.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', 
+                    filename='transform_fhir.log', encoding='utf-8', level=logging.INFO,
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 def _parse_args():
     """Parses commandline arguments and validates user input.

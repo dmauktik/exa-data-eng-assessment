@@ -4,7 +4,9 @@ process and improves scalability, reliability and availability"""
 from asyncio import Queue, sleep
 import logging
 
-logging.basicConfig(filename='transform_fhir.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', 
+                    filename='transform_fhir.log', encoding='utf-8', level=logging.INFO,
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 class FhirQueue(object):
     """A singleton class holding queue object and used in ingest and transform modules"""

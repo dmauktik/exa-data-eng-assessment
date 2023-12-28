@@ -8,7 +8,9 @@ import pandas as pd
 from  common.fhir_queue import FhirQueue
 from common.storage_queue import StorageQueue
 
-logging.basicConfig(filename='transform_fhir.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', 
+                    filename='transform_fhir.log', encoding='utf-8', level=logging.INFO,
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 class ProcessFihr:
      """Class to fetch and process queue items/objects to dataframe"""
@@ -83,8 +85,8 @@ class ProcessFihr:
             await StorageQueue().enqueue( self.entity_df_dict)
             logging.debug("Size of resultant df dict is %d", len(self.entity_df_dict))
        
-            #print(f"Queue items to process {FhirQueue().queue_size()}")
+            #logging.debug(f"Queue items to process {FhirQueue().queue_size()}")
         return_val = FhirQueue().queue_size() == 0
-        logging.info("All fhir queue items processed.")
+        logging.info("Processed all the fhir queue items.")
         await StorageQueue().enqueue( None)
         return return_val

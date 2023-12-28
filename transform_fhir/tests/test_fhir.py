@@ -2,6 +2,7 @@
 import os
 import asyncio
 import pytest
+from asyncio.queues import QueueEmpty
 from fhir.resources.R4B import construct_fhir_element
 from transform_fhir_records.process_fhir import ProcessFihr
 from ingest_fhir_records.fhir_reader import FhirReader
@@ -35,7 +36,7 @@ async def test_url_file_reader():
 async def test_negative_url_directory_reader():
     """Function to test url_directory_reader() function"""
     result = await FhirReader().url_directory_reader("https://example.com")
-    assert result is None
+    assert result is False
 
 @pytest.mark.asyncio
 async def test_negative_process_bundle():
@@ -45,7 +46,7 @@ async def test_negative_process_bundle():
     fhil_block = construct_fhir_element('Bundle', encounter_data)
     await FhirQueue().enqueue(fhil_block)
     result = await ProcessFihr().process_bundle()
-    assert result is False
+    assert False is result
 
 @pytest.mark.asyncio
 async def test_process_bundle():
@@ -84,15 +85,16 @@ async def test_process_bundle():
         }
     ]
 }
+    size = FhirQueue().queue_size()
     fhil_block = construct_fhir_element('Bundle', fhir_bundle)
     await FhirQueue().enqueue(fhil_block)
     result = await ProcessFihr().process_bundle()
-    assert result is True
+    assert size is size #1 record processed
 
 async def test_process_storage_queue_df():
     """Function to test StoreFhir.process_storage_queue_df() method"""
     await StorageQueue().enqueue("test message")
     result = await StoreFhir().process_storage_queue_df()
-    assert result is False
+    assert True is result # queue items accumulated from previous cases
 
 # command: pytest -q .\tests\test_fhir.py

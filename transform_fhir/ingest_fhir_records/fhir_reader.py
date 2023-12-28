@@ -11,7 +11,9 @@ import aiohttp
 from fhir.resources.R4B import construct_fhir_element, FHIRAbstractModel
 from common.fhir_queue import FhirQueue
 
-logging.basicConfig(filename='transform_fhir.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', 
+                    filename='transform_fhir.log', encoding='utf-8', level=logging.INFO,
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 class FhirReader:
     """The class ingestes FHIR records/files from local disk or from given URL as GET method"""
@@ -118,7 +120,7 @@ class FhirReader:
             else:
                 logging.error("No response to process for %s", url_to_call)
             logging.info("Queue size after ingestion is %d", FhirQueue().queue_size())
-            self._add_to_queue(None)
+            await self._add_to_queue(None)
             return response_val
 
     async def url_directory_reader(self, base_url: str):
@@ -127,6 +129,7 @@ class FhirReader:
         Input: base_url=github url of the folder having fhir json files
         Returns: Result as boolean"""
         response_val = False
+        response_jsons = {}
         base_url = base_url + '/' if base_url[-1] != '/' else ''
         tasks = []
         async with aiohttp.ClientSession() as client:
@@ -152,6 +155,7 @@ class FhirReader:
         for rj in response_jsons:
             if rj:
                 response_val = await self._parse_add_to_queue(rj)
+                await asyncio.sleep(0)
             else:
                 logging.error("No response to process")
         logging.info("Done. Queue size after extract process is %d", FhirQueue().queue_size())

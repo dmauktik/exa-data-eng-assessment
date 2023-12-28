@@ -13,7 +13,6 @@ logging.basicConfig(filename='transform_fhir.log', encoding='utf-8', level=loggi
 class ProcessFihr:
      """Class to fetch and process queue items/objects to dataframe"""
      def __init__(self) -> None:
-            self.has_began = False
             self.entity_df_dict = {}
      
      def _flatten_obj(self, d: dict, parent_key=''):
@@ -45,10 +44,10 @@ class ProcessFihr:
         logging.info("Starting to get items from fhir queue")
         while True:
             # Wait for the first fhir bundle object to go in the queue
-            if self.has_began is True and FhirQueue().queue_size() == 0:
-                 break
             fhil_block = await FhirQueue().dequeue()
-            self.has_began = True
+            self.entity_df_dict = {}
+            if fhil_block is None:
+                  break
             print(f"Transform task picking next object...Queue size {FhirQueue().queue_size()}")
             block_dict = fhil_block.dict()
             if "entry" not in block_dict:
@@ -70,6 +69,8 @@ class ProcessFihr:
                         class_ = getattr(module, resource_type)
                         resource_obj = class_.parse_obj(rsrc)
                         flat_data = self._flatten_obj(resource_obj.dict())
+                        if flat_data["resourceType"] == "Patient":
+                              logging.info(flat_data)
                         # transform parsed object to dataframe
                         df = pd.DataFrame([flat_data])
                         if resource_type in  self.entity_df_dict:
@@ -81,8 +82,9 @@ class ProcessFihr:
                        logging.error("No module found %s", str(ex))
             await StorageQueue().enqueue( self.entity_df_dict)
             logging.debug("Size of resultant df dict is %d", len(self.entity_df_dict))
-            
+       
             #print(f"Queue items to process {FhirQueue().queue_size()}")
         return_val = FhirQueue().queue_size() == 0
         logging.info("All fhir queue items processed.")
+        await StorageQueue().enqueue( None)
         return return_val

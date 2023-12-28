@@ -20,7 +20,7 @@ class FhirReader:
         # This should be a configurable value.
         self.timeout = timeout
 
-    async def _add_to_queue(self, item: FHIRAbstractModel):
+    async def _add_to_queue(self, item):
         """Add bundle block to queue
         Input: item=FhirModel object
         Returns: None"""
@@ -76,7 +76,9 @@ class FhirReader:
         logging.info("Parsing %d fhil bundles...wait...wait...", len(json_blocks))
         for jblk in json_blocks:
             response_val = await self._parse_add_to_queue(jblk)
+            await asyncio.sleep(0)
         logging.info("Done. Queue size after ingestion is %d", FhirQueue().queue_size())
+        await self._add_to_queue(None)
         return response_val
 
     async def _get_bundle_from_url(self, url: str, client: aiohttp.ClientSession) -> dict:
@@ -116,6 +118,7 @@ class FhirReader:
             else:
                 logging.error("No response to process for %s", url_to_call)
             logging.info("Queue size after ingestion is %d", FhirQueue().queue_size())
+            self._add_to_queue(None)
             return response_val
 
     async def url_directory_reader(self, base_url: str):
@@ -125,6 +128,7 @@ class FhirReader:
         Returns: Result as boolean"""
         response_val = False
         base_url = base_url + '/' if base_url[-1] != '/' else ''
+        tasks = []
         async with aiohttp.ClientSession() as client:
             response = await self._get_bundle_from_url(base_url, client)
             if response:
@@ -133,7 +137,7 @@ class FhirReader:
                     file_list = response["payload"]["tree"]["items"]
                 except KeyError as ex:
                     logging.error("Error while getting file names: %s", str(ex))
-                tasks = []
+                
                 #Fetch file contents in the directry in the loop
                 for fl in file_list:
                     file_url = base_url  + fl["name"]
@@ -143,10 +147,13 @@ class FhirReader:
                 logging.info("Fetching files from remote.....wait...wait...")
                 response_jsons = await asyncio.gather(*tasks)
                 logging.info("Done. Creating fhir objects and adding to the queue...wait...wait...")
-                for rj in response_jsons:
-                    if rj:
-                        response_val = await self._parse_add_to_queue(rj)
-                    else:
-                        logging.error("No response to process")
-                logging.info("Done. Queue size after extract process is %d", FhirQueue().queue_size())
-                return response_val
+            else:
+                logging.error("Received no response for %s", base_url)
+        for rj in response_jsons:
+            if rj:
+                response_val = await self._parse_add_to_queue(rj)
+            else:
+                logging.error("No response to process")
+        logging.info("Done. Queue size after extract process is %d", FhirQueue().queue_size())
+        await self._add_to_queue(None)
+        return response_val

@@ -48,6 +48,7 @@ async def main():
         case 'get_folder_url':
             logging.info("Mode: get_folder_url")
             tasks.append(asyncio.create_task(reader.url_directory_reader(args.url)))
+    
     transform = ProcessFihr()
     tasks.append(asyncio.create_task(transform.process_bundle()))
     storage = StoreFhir()

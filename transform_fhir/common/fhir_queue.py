@@ -1,7 +1,7 @@
 """FhirQueue holds async Queue object. Inject module puts object in this queue and transform
 module consumes and processes the objects. Queue helps to decouple Extract and Transform
 process and improves scalability, reliability and availability"""
-from asyncio import Queue
+from asyncio import Queue, sleep
 import logging
 
 logging.basicConfig(filename='transform_fhir.log', encoding='utf-8', level=logging.INFO)
@@ -31,11 +31,14 @@ class FhirQueue(object):
     async def enqueue(self, item):
         """Push an item to queue.
         Input: item: Python object representing fhir data"""
+        await sleep(0)
         await self._queue.put(item)
+
 
     async def dequeue(self):
         """Pops an item from the queue and returns it
         Input: None
         Returns: Poped value from the queue"""
         ret_val = await self._queue.get()
+        await sleep(0)
         return ret_val

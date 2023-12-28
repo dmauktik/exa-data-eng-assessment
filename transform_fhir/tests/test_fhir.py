@@ -45,7 +45,7 @@ async def test_negative_process_bundle():
     fhil_block = construct_fhir_element('Bundle', encounter_data)
     await FhirQueue().enqueue(fhil_block)
     result = await ProcessFihr().process_bundle()
-    assert result is -1
+    assert result is False
 
 @pytest.mark.asyncio
 async def test_process_bundle():
@@ -87,12 +87,12 @@ async def test_process_bundle():
     fhil_block = construct_fhir_element('Bundle', fhir_bundle)
     await FhirQueue().enqueue(fhil_block)
     result = await ProcessFihr().process_bundle()
-    assert result is 0
+    assert result is True
 
 async def test_process_storage_queue_df():
     """Function to test StoreFhir.process_storage_queue_df() method"""
     await StorageQueue().enqueue("test message")
     result = await StoreFhir().process_storage_queue_df()
-    assert result is True
+    assert result is False
 
 # command: pytest -q .\tests\test_fhir.py

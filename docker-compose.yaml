@@ -1,6 +1,18 @@
 version: '3.8'
 services:
-  postgresql:
+  etl_app:
+    image: python:3.10
+    volumes:
+      - ./transform_fhir:/app
+      - ./data:/app/data
+    command: bash -c "pip install --upgrade pip && pip install -r requirements.txt && python3 main.py -m \"local_disk\" -d \"/app/data\"" 
+    env_file:
+      - .env
+    working_dir: /app
+    depends_on:
+      - postgresql_db
+
+  postgresql_db:
     image: postgres:16.1
     container_name: transform_fhir_db
     restart: always

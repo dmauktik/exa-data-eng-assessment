@@ -1,22 +1,4 @@
-# Table of Contents
-
-[INTRODUCTION 2](#_Toc154917524)
-
-[ASSUMPTIONS: 2](#assumptions)
-
-[ARCHITECTURE 3](#_Toc154917526)
-
-[CHOICE OF TECH STACK: 4](#_Toc154917527)
-
-[IMPLEMENTATION: 4](#_Toc154917528)
-
-[RUNNING THE PIPELINE 6](#_Toc154917529)
-
-[VALIDATION: 7](#_Toc154917530)
-
-[SUMMARY 8](#_Toc154917531)
-
-<span id="_Toc154917524" class="anchor"></span>INTRODUCTION:
+# INTRODUCTION:
 
 This document describes the proof of concept (PoC) developed to
 transform Fhir json data to tabular semi-structured format so that SQL
@@ -30,6 +12,7 @@ messages into a more workable format preferably in a tabular format.
 Include any documentation / commentary you deem necessary.
 
 Reference: <https://github.com/dmauktik/exa-data-eng-assessment>
+
 
 # ASSUMPTIONS:
 
@@ -66,7 +49,7 @@ made while designing the solution:
     functionality (for production it should be a decoupled and
     distributed system).
 
-<span id="_Toc154917526" class="anchor"></span>ARCHITECTURE:
+# ARCHITECTURE:
 
 The PoC ETL pipeline has 3 modules: Extract, transform and load.
 
@@ -100,7 +83,8 @@ The modules can be deployed as AWS Glue jobs, files to be ingested can
 be placed on S3 bucket having a ‘file create’ trigger. The transformed
 data can be stored in data warehouse like Redshift.
 
-<span id="_Toc154917527" class="anchor"></span>CHOICE OF TECH STACK:
+
+# CHOICE OF TECH STACK:
 
 Though any modern programming language can be used, this PoC has been
 implemented in Python 3.10.
@@ -127,7 +111,8 @@ Convert Fhir Json files to Parque format, store in a data lake and query
 (using Athena or DuckDB) or load the generated Parque files to data
 warehouse.
 
-<span id="_Toc154917528" class="anchor"></span>IMPLEMENTATION:
+
+# IMPLEMENTATION:
 
 Python modules:
 
@@ -157,10 +142,11 @@ mandatory with local\_disk mode.
 
 -u; URL, --url URL
 
-> github url of fhir file with 'get\_file\_url' mode or github folder
-> url with 'get\_folder\_url' mode
+github url of fhir file with 'get\_file\_url' mode or github folder
+url with 'get\_folder\_url' mode
 
-Examples:
+
+### Examples:
 
 \# Command line examples:
 
@@ -202,7 +188,8 @@ decouple the system and make it fault tolerant.
     storage queue, sets table constraints and store all the records in
     the configured database.
 
-Containerisation and venv:
+
+ ### Containerisation and venv:
 
 This PoC is deployed in two docker containers. One container is for
 Postgresql database and other container has ETL pipeline tasks.
@@ -219,7 +206,8 @@ Moreover, as container is providing isolation, python venv is not
 created but it is recommended if multiple programs/services run on the
 same server/container.
 
-<span id="_Toc154917529" class="anchor"></span>RUNNING THE PIPELINE:
+
+# RUNNING THE PIPELINE:
 
 Follow the steps below to run the data pipeline PoC:
 
@@ -228,13 +216,13 @@ Follow the steps below to run the data pipeline PoC:
 
 2.  Pull the code from the following github repository:
 
-> <https://github.com/dmauktik/exa-data-eng-assessment>
+     <https://github.com/dmauktik/exa-data-eng-assessment>
 
 3.  Edit .env file to set POSTGRES\_USER and POSTGRES\_PASSWORD
     environment variables
 
-> Note: For the actual applications, credentials are either set by build
-> system or secrets manager is used to store and access credentials.
+Note: For the actual applications, credentials are either set by build
+system or secrets manager is used to store and access credentials.
 
 4.  Open command-line and go the directory where docker-compose.yaml is
     present i.e. EXA-DATA-ENG-ASSESSMENT and run the following command:
@@ -265,7 +253,8 @@ Tables:
 
 <img src="media/image2.png" style="width:2.79181in;height:5.96558in" />
 
-<span id="_Toc154917530" class="anchor"></span>VALIDATION:
+
+# VALIDATION:
 
 Patient table record count should be same as file count in data folder.
 
@@ -280,14 +269,14 @@ format based on the requirements.
 Run queries on the tables to validate the data. Following query is a
 join between two tables:
 
-SELECT cp.id, cp.status, cp.intent, ct.participant,
-ct."managingOrganization" FROM "CarePlan" cp INNER JOIN "CareTeam" ct ON
-concat('"',SPLIT\_PART(cp."careTeam", ':', 4)) like concat( '%',
-ct."id", '%' ) LIMIT 100
+> SELECT cp.id, cp.status, cp.intent, ct.participant,
+> ct."managingOrganization" FROM "CarePlan" cp INNER JOIN "CareTeam" ct ON
+> concat('"',SPLIT\_PART(cp."careTeam", ':', 4)) like concat( '%',
+> ct."id", '%' ) LIMIT 100
 
 <img src="media/image4.png" style="width:6.26806in;height:2.76458in" />
 
-<span id="_Toc154917531" class="anchor"></span>SUMMARY
+# SUMMARY
 
 Fhir json files can be transformed to the tabular format. Considering
 the number of attributes in a bundle and relation between them (patient,

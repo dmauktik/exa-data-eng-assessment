@@ -5,7 +5,7 @@ services:
     volumes:
       - ./transform_fhir:/app
       - ./data:/app/data
-    command: bash -c "pip install --upgrade pip && pip install -r requirements.txt && python3 main.py -m \"local_disk\" -d \"/app/data\"" 
+    command: bash -c "pip install --upgrade pip && pip install -r requirements.txt && python3 main.py -m \"get_folder_url\" -u \"https://github.com/dmauktik/exa-data-eng-assessment/tree/main/data\""
     env_file:
       - .env
     working_dir: /app
